@@ -32,43 +32,50 @@ Treat each quarter’s listings as a decision window.
    - Provide a short **feature provenance table** (a few representative features) explaining why each is valid at listing time.
 
 3. **Baseline Model & Evaluation**
-   - Train a simple classifier (e.g., logistic regression, tree/GBM) that outputs calibrated probabilities of default (PD).
+   - Train a simple classifier (e.g., logistic regression, tree/GBM) that outputs **calibrated probabilities of default (PD)**.
    - Use a **time-ordered split**: train on earlier quarters, validate on the next quarter (e.g., train: 2016Q1–2016Q3, validate: 2016Q4).  
-   - Report: ROC-AUC **and** calibration (reliability curve) **and** Brier score on the validation set.
-   - Briefly interpret calibration (e.g., “over-confident in the 0.1–0.2 bin”).
+   - **Calibrate on 2016Q4** using **isotonic** or **sigmoid (Platt)** with `cv="prefit"`, and apply that mapping to the hold-out.
+   - Report on the validation set: **ROC-AUC**, **Brier score**, and a **calibration (reliability) curve**. Briefly interpret calibration (e.g., “over-confident in the 0.1–0.2 bin”).
+   - **PD definition:** PD = **P(default = 1)**. Extract robustly via  
+     ```python
+     pd = clf.predict_proba(X)[:, list(clf.classes_).index(1)]
+     ```
 
 4. **Decision Policy & Budget**
-   - With a **$50,000 budget per quarter**, select loans based on your predicted risk (e.g., top-K with lowest PD or highest expected value).
+   - With a **$50,000 budget per quarter**, select loans based on your predicted risk (e.g., **threshold on PD** or **top‑K by lowest PD**).
    - Spell out your rule (threshold or ranking). Count selected loans per quarter.
 
 5. **Backtest**
-   - Apply your selection rule to a **held-out later quarter** (e.g., 2017Q1).  
+   - Apply your selection rule to a **fixed hold‑out quarter: 2017Q1** (same for everyone).  
    - Report at least:
-     - **Selected default rate vs. overall default rate** in that quarter.
-     - A simple **ROI proxy**. You may choose a reasonable, documented proxy. For example:
-
+     - **Selected default rate vs. overall default rate** in 2017Q1.
+     - **Budget utilization** = total invested / **50,000**.
+     - A simple **ROI proxy**. Use a fixed recovery factor **α** that applies **only to loans that actually default** in 2017Q1; non‑defaults use full scheduled payments.
        ```text
        ROI_proxy = (collected_payments - principal) / principal
-       where, for a toy assumption:
+       where (toy assumption):
          if not default: collected_payments ≈ installment * term_months
-         if default: collected_payments ≈ 0.30 * installment * term_months   # assume 30% paid before default
+         if default:     collected_payments ≈ α * installment * term_months   # default α = 0.30
        ```
-
-     - State your assumptions clearly; simpler is fine if well-explained.
+     - State your assumptions clearly; simpler is fine if well‑explained.
 
 6. **Explainability**
    - Show top features (coefficients or feature importance) and note one or two surprising relationships.
 
-7. **(Optional, +5 pts) Tiny “AI-era” Extension**
+7. **(Optional, +5 pts) Tiny “AI‑era” Extension**
    - Add **one** light text-derived feature (e.g., `emp_title` length, contains digits/keywords). Show if it helped.
 
 ---
 
 ## Deliverables (via GitHub PR)
-- A single **notebook** (or `.py` script) that runs end-to-end locally.
+- A single **notebook** (or `.py` script) that runs end‑to‑end locally.
 - `SUMMARY.md` (≤1 page) with: approach, metrics, assumptions, decision rule, what you’d try next.
 - `requirements.txt` with pinned versions sufficient to run your code.
-- A short **AI-use disclosure** (if used): where you used AI assistance (e.g., boilerplate EDA) and how you validated the output.
+- A short **AI‑use disclosure** (if used): where you used AI assistance (e.g., boilerplate EDA) and how you validated the output.
+
+**Optional but helpful artifacts (to ease review):**
+- `artifacts/calibration.png` (your reliability plot)
+- `artifacts/selected_2017Q1.csv` with `loan_id, loan_amnt, PD, selected_flag, rank[, allocation_amount]`
 
 **Timebox:** Aim for **4–6 hours** total.
 
@@ -77,9 +84,9 @@ Treat each quarter’s listings as a decision window.
 ## Guardrails & Checks
 - **Listing-time only:** Do not use post-event/banned fields (see examples above).  
 - **Temporal validation:** Ensure `max(issue_d)` in train < `min(issue_d)` in validation.  
-- **Reproducibility:** Fix random seeds where applicable and include requirements.  
-- **Calibration:** Include a reliability plot and Brier score on the hold-out/validation set.  
-- **Decision policy:** Make your budget rule explicit and backtest it on a later quarter.
+- **Calibration:** Calibrate on **2016Q4** and include a reliability plot + Brier on validation.  
+- **PD extraction:** Use `predict_proba(... )[:, index_of_class_1]` so PD truly equals **P(default=1)**.  
+- **Decision policy:** Make your budget rule explicit and backtest it on **2017Q1**.
 
 > Submissions that rely on random splits, leak obvious outcome fields, or skip the decision/backtest step will be marked down.
 
@@ -100,23 +107,3 @@ Treat each quarter’s listings as a decision window.
 - You may downsample/upsample or use class weights; explain your choice.
 - Keep the solution compact and readable. We care about your reasoning as much as your metrics.
 - If you propose a different, sensible ROI proxy or selection rule, that’s fine—just document it.
-
-
-## Submission Information
-
-### Create a fork of the repository
-<img width="1699" height="393" alt="image" src="https://github.com/user-attachments/assets/f887255c-0155-4b0e-b90b-5d42b26b73b6" />
-
----
-
-<img width="1792" height="870" alt="image" src="https://github.com/user-attachments/assets/1719eb7a-e2d2-4db9-8241-150a5f911f3d" />
-
----
-
-This will create a forked copy of the repository under your github account. You can use this fork to create to complete your data challenge. When your submission is ready, you can open a pull request (PR) against this repository using the branch on your fork that contains your work. Your fork has knowledge of the main repository it was created from. Use the `Contribute` button to create the PR.
-
-<img width="1745" height="777" alt="image" src="https://github.com/user-attachments/assets/43c55bc0-eccd-4108-aa12-53c8796efd05" />
-
----
-
-
