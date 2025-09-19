@@ -38,7 +38,7 @@ Treat each quarter’s listings as a decision window.
    - Briefly interpret calibration (e.g., “over-confident in the 0.1–0.2 bin”).
 
 4. **Decision Policy & Budget**
-   - With a **$5,000 budget per quarter**, select loans based on your predicted risk (e.g., top-K with lowest PD or highest expected value).
+   - With a **$50,000 budget per quarter**, select loans based on your predicted risk (e.g., top-K with lowest PD or highest expected value).
    - Spell out your rule (threshold or ranking). Count selected loans per quarter.
 
 5. **Backtest**
